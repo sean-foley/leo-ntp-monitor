@@ -3,6 +3,7 @@ import struct
 import time
 import json
 import sys
+import os
 import getopt
 
 NTP_DEFAULT_PORT_NUM = 123
@@ -107,15 +108,39 @@ def get_command_line(argv):
         print('usage:  --ntpserver=SERVERNAME --port=NTP-PORT')
         sys.exit(2)
 
+def get_environment_args():
+    host = os.getenv('NTP_SERVER')
+    port = os.getenv('NTP_PORT')
+
+    if port is None:
+        port = NTP_DEFAULT_PORT_NUM
+    elif port is not None:
+        port = int(port)
+
+    return host, port
 
 def process():
 
-    host, port = get_command_line(sys.argv[1:])
+    host, port = get_environment_args()
+
+    # if we don't have a host, then assume the
+    # environment variables are not set, and try
+    # to grab the config from the command line
+    if host is None:
+        host, port = get_command_line(sys.argv[1:])
+
+    if host is None:
+        print("You must either set the NTP_SERVER/NTP_PORT environment variables OR")
+        print("pass the --ntp-server/--ntp_port command line options")
+        sys.exit(2)
+
+    print('Using host={0}, port={1}'.format(host, port))
 
     metrics = get_ntp_metrics(host, port)
 
     print(json.dumps(metrics))
 
+    sys.exit(0)
 
 if __name__ == '__main__':
     process()
