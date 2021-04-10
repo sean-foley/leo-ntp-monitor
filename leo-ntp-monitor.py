@@ -5,19 +5,25 @@ import json
 import sys
 import os
 import getopt
+import threading
+import logging
 
 NTP_DEFAULT_PORT_NUM = 123
+
+NTP_POLLING_RATE_SECONDS = 60
+NTP_POLLING_ONCE_ONLY = -1
 
 # reference time in seconds since 1900-01-01 00:00:00
 # for conversion from NTP time to system time
 TIME1970 = 2208988800
 
 # the default timeout for socket operations
-SOCKET_TIMEOUT_SECS = 10.0
+SOCKET_TIMEOUT_SECS = 1.0
+
+logging.basicConfig(level=logging.NOTSET, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def get_ntp_metrics(host, port, timeout_sec=SOCKET_TIMEOUT_SECS):
-
     version = 4
     mode = 7
 
@@ -86,12 +92,12 @@ def get_ntp_metrics(host, port, timeout_sec=SOCKET_TIMEOUT_SECS):
 
 
 def get_command_line(argv):
-
     host = ''
     port = NTP_DEFAULT_PORT_NUM
+    polling = NTP_POLLING_ONCE_ONLY
 
     try:
-        opts, args = getopt.getopt(argv, "", ["ntpserver=", "port="])
+        opts, args = getopt.getopt(argv, "", ["ntpserver=", "port=", "polling="])
 
         for opt, arg in opts:
             if opt == '-h':
@@ -101,46 +107,79 @@ def get_command_line(argv):
                  host = arg
             elif opt in ("-p", "--port"):
                  port = int(arg)
+            elif opt in ("--polling"):
+                 polling = int(arg)
 
-        return host, port
+        return host, port, polling
 
     except getopt.GetoptError:
         print('usage:  --ntpserver=SERVERNAME --port=NTP-PORT')
         sys.exit(2)
 
+
 def get_environment_args():
     host = os.getenv('NTP_SERVER')
     port = os.getenv('NTP_PORT')
+    polling = os.getenv('NTP_POLLING_PERIOD_SECONDS')
 
     if port is None:
         port = NTP_DEFAULT_PORT_NUM
     elif port is not None:
         port = int(port)
 
-    return host, port
+    if polling is None:
+        polling = NTP_POLLING_RATE_SECONDS
+    elif polling is not None:
+        polling = int(polling)
+
+    logging.info('env variables NTP_SERVER=%s, NTP_PORT=%s, NTP_POLLING_PERIOD_SECONDS=%s', host, port, polling)
+
+    return host, port, polling
+
 
 def process():
-
-    host, port = get_environment_args()
+    host, port, polling = get_environment_args()
 
     # if we don't have a host, then assume the
     # environment variables are not set, and try
     # to grab the config from the command line
     if host is None:
-        host, port = get_command_line(sys.argv[1:])
+        host, port, polling = get_command_line(sys.argv[1:])
 
     if host is None:
         print("You must either set the NTP_SERVER/NTP_PORT environment variables OR")
         print("pass the --ntp-server/--ntp_port command line options")
         sys.exit(2)
 
-    print('Using host={0}, port={1}'.format(host, port))
+    print('Using host={0}, port={1}, polling={2}'.format(host, port, polling))
 
-    metrics = get_ntp_metrics(host, port)
+    logging.info('using host=%s, port=%s, polling=%s', host, port, polling)
 
-    print(json.dumps(metrics))
+    # We are using an event because a ctrl-c (or other signals)
+    # will cause it to break out - i.e. more responsive than a sleep
+    looping = threading.Event();
+
+    if polling == NTP_POLLING_ONCE_ONLY:
+        metrics = get_ntp_metrics(host, port)
+        logging.info(json.dumps(metrics))
+    else:
+        bail = False
+        while not bail:
+            try:
+                metrics = get_ntp_metrics(host, port)
+                logging.info(json.dumps(metrics))
+
+                bail = looping.wait(polling)
+            except socket.error as err:
+                logging.error(
+                    'a socket exception occurred trying to connect to host=%s, port=%s, error=%s',
+                    host, port, err
+                )
 
     sys.exit(0)
 
+
 if __name__ == '__main__':
     process()
+
+

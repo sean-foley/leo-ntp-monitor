@@ -8,4 +8,5 @@ services:
     environment:
       NTP_SERVER: ntp.padnet.home
       NTP_PORT: 123
+      NTP_POLLING_PERIOD_SECONDS: 60
 
