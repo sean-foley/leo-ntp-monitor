@@ -1,6 +1,7 @@
 FROM alpine:latest
-
-RUN apk add --no-cache python3
+RUN apk update 
+RUN apk upgrade
+RUN apk add --no-cache python3 bash
 
 # Setup the environment variables
 ENV NTP_SERVER ntp.notset
