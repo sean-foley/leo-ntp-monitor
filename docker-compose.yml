@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  leontp:
+    image: leo-ntp-monitor:latest
+    container_name: ntp-monitor
+    restart: unless-stopped
+    environment:
+      NTP_SERVER: ntp.padnet.home
+      NTP_PORT: 123
+
