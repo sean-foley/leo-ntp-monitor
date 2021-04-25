@@ -7,6 +7,8 @@ import os
 import getopt
 import threading
 import logging
+from influxdb_client import InfluxDBClient, Point
+from influxdb_client.client.write_api import SYNCHRONOUS
 
 NTP_DEFAULT_PORT_NUM = 123
 
@@ -137,8 +139,87 @@ def get_environment_args():
     return host, port, polling
 
 
+def use_influx():
+
+    # Assume we are using influx
+    result = True
+
+    bucket = os.getenv('INFLUXDB_V2_BUCKET')
+    if not bucket:
+        logging.warning("INFLUXDB_V2_URL environment variable is not set. This must be set to use influx")
+        result = False
+
+    url = os.getenv('INFLUXDB_V2_URL')
+    if not url:
+        logging.warning("INFLUXDB_V2_URL environment variable is not set. This must be set to use influx")
+        result = False
+
+    token = os.getenv('INFLUXDB_V2_TOKEN')
+    if not token:
+        logging.warning("INFLUXDB_V2_TOKEN environment variable is not set. This must be set to use influx")
+        result = False
+    else:
+        unmasked_chars = 5
+        if len(token) > unmasked_chars:
+            prefix = token[0:unmasked_chars]
+            masked = '*' * (len(token) - unmasked_chars)
+            token = prefix + masked
+        else:
+            # we have a short string, so mask everything
+            token = '*' * len(token)
+
+    org = os.getenv('INFLUXDB_V2_ORG')
+    if not org:
+        logging.warning("INFLUXDB_V2_ORG environment variable is not set. This must be set to use influx")
+        result = False
+
+    if result is True:
+        logging.info(
+            "found influxdb env variables. INFLUXDB_V2_BUCKET=%s, INFLUXDB_V2_URL=%s, INFLUXDB_V2_ORG=%s, INFLUXDB_V2_ORG=%s",
+            bucket, url, org, token
+        )
+
+    return result
+
+
+def send_to_influx(metrics):
+
+    bucket = os.getenv('INFLUXDB_V2_BUCKET')
+
+    logging.info('attempting to send ntp metrics to influxdb')
+
+    try:
+        p0 = Point("ntp").tag("serial-number", metrics["serial-number"]).field(
+            "satellites", metrics["satellites"]).time(metrics["utc-time"])
+
+        p1 = Point("ntp").tag("serial-number", metrics["serial-number"]).field(
+            "lock-time-hours", metrics["lock-time-hours"]).time(metrics["utc-time"])
+
+        p2 = Point("ntp").tag("serial-number", metrics["serial-number"]).field(
+            "uptime-hours", metrics["uptime-hours"]).time(metrics["utc-time"])
+
+        p3 = Point("ntp").tag("serial-number", metrics["serial-number"]).field(
+            "ntp-requests", metrics["ntp-requests"]).time(metrics["utc-time"])
+
+        # Note tried using a with statement and these
+        # keep blowing up. So f-it for now.
+        client = InfluxDBClient.from_env_properties();
+        write_api = client.write_api(write_options=SYNCHRONOUS)
+        try:
+            write_api.write(bucket=bucket, record=[p0, p1, p2, p3])
+        finally:
+            write_api.close()
+
+        client.close()
+
+    except Exception as e:
+        logging.exception('a fatal exception happened while trying to send ntp metrics to influx')
+
+
 def process():
     host, port, polling = get_environment_args()
+
+    capture_metrics = use_influx()
 
     # if we don't have a host, then assume the
     # environment variables are not set, and try
@@ -168,6 +249,9 @@ def process():
             try:
                 metrics = get_ntp_metrics(host, port)
                 logging.info(json.dumps(metrics))
+
+                if capture_metrics is True:
+                    send_to_influx(metrics)
 
                 bail = looping.wait(polling)
             except socket.error as err:

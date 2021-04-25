@@ -9,4 +9,11 @@ services:
       NTP_SERVER: ntp.padnet.home
       NTP_PORT: 123
       NTP_POLLING_PERIOD_SECONDS: 60
-
+      INFLUXDB_V2_URL: "http://pihost-03.padnet.home:8086"
+      INFLUXDB_V2_BUCKET: "ntp-metrics"
+      INFLUXDB_V2_ORG: "padnet"
+      INFLUXDB_V2_TOKEN: "{INSERT_TOKEN}"
+      INFLUXDB_V2_TIMEOUT: 10000
+      #INFLUXDB_V2_SSL_CA_CERT:
+      #INFLUXDB_V2_CONNECTION_POOL_MAXSIZE:
+      #INFLUXDB_V2_VERIFY_SSL: true
