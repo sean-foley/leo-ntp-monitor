@@ -253,7 +253,7 @@ def process():
                 if capture_metrics is True:
                     send_to_influx(metrics)
 
-                logger.info("next polling period will be in %s seconds", polling)
+                logging.info("next polling period will be in %s seconds", polling)
                 bail = looping.wait(polling)
             except socket.error as err:
                 logging.error(
