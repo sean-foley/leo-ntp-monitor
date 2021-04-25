@@ -186,7 +186,7 @@ def send_to_influx(metrics):
 
     bucket = os.getenv('INFLUXDB_V2_BUCKET')
 
-    logging.info('attempting to send ntp metrics to influxdb')
+    logging.info('sending ntp metrics to influxdb')
 
     try:
         p0 = Point("ntp").tag("serial-number", metrics["serial-number"]).field(
@@ -253,6 +253,7 @@ def process():
                 if capture_metrics is True:
                     send_to_influx(metrics)
 
+                logger.info("next polling period will be in %s seconds", polling)
                 bail = looping.wait(polling)
             except socket.error as err:
                 logging.error(
