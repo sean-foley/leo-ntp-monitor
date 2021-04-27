@@ -6,14 +6,32 @@ services:
     container_name: ntp-monitor
     restart: unless-stopped
     environment:
+      # Set this to the fully qualified host name/ip address for the
+      # LeoNTP time server device
       NTP_SERVER: ntp.padnet.home
+
+      # this is the LeoNTP port to connect to - best to leave as-is
       NTP_PORT: 123
+
+      # this will control how often we check for ntp metrics
       NTP_POLLING_PERIOD_SECONDS: 60
+
+      # Set this to fully qualified host name/ip address
+      # to your InfluxDBV2 instance
       INFLUXDB_V2_URL: "http://pihost-03.padnet.home:8086"
+
+      # Change this to match the InfluxDB bucket
       INFLUXDB_V2_BUCKET: "ntp-metrics"
+
+      # Change this to your influxdb org name
       INFLUXDB_V2_ORG: "padnet"
+
+      # Create an Influxdb API token and insert that here
       INFLUXDB_V2_TOKEN: "{INSERT_TOKEN}"
       INFLUXDB_V2_TIMEOUT: 10000
+
+      # You shouldn't need to tweak these unless you are using
+      # ssl to secure the channel to Influxdb
       #INFLUXDB_V2_SSL_CA_CERT:
       #INFLUXDB_V2_CONNECTION_POOL_MAXSIZE:
       #INFLUXDB_V2_VERIFY_SSL: true
