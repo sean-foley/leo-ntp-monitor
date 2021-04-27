@@ -70,3 +70,5 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## Acknowledgments
 **Billie Thompson** - *for the README.md template* - [PurpleBooth](https://github.com/PurpleBooth)
+
+**LEO NTP Stats** - *statistics protocol definition* [LeoNTP-Stats](https://www.leontp.com/firmware/LeoNTP-stats.zip)
