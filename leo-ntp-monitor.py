@@ -190,16 +190,16 @@ def send_to_influx(metrics):
 
     try:
         p0 = Point("ntp").tag("serial-number", metrics["serial-number"]).field(
-            "satellites", metrics["satellites"]).time(metrics["utc-time"])
+            "satellites", metrics["satellites"])
 
         p1 = Point("ntp").tag("serial-number", metrics["serial-number"]).field(
-            "lock-time-hours", metrics["lock-time-hours"]).time(metrics["utc-time"])
+            "lock-time-hours", metrics["lock-time-hours"])
 
         p2 = Point("ntp").tag("serial-number", metrics["serial-number"]).field(
-            "uptime-hours", metrics["uptime-hours"]).time(metrics["utc-time"])
+            "uptime-hours", metrics["uptime-hours"])
 
         p3 = Point("ntp").tag("serial-number", metrics["serial-number"]).field(
-            "ntp-requests", metrics["ntp-requests"]).time(metrics["utc-time"])
+            "ntp-requests", metrics["ntp-requests"])
 
         # Note tried using a with statement and these
         # keep blowing up. So f-it for now.

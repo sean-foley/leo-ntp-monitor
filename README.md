@@ -1,87 +1,72 @@
 # Leo NTP Monitor
 
-This project pulls stats from a [LeoNTP Networked Time Server](http://www.leobodnar.com/shop/index.php?main_page=product_info&products_id=272)
+![](./images/leo-ntp-device.jpg)
+My network _had_ a ntp server.  However, that ntp server was silently failing when talking to the ntp pool of timeservers.  Bad things 
+happen when the time isn't properly set on your various gadgets.  So I decided to add this 
+[LeoNTP Networked Time Server](http://www.leobodnar.com/shop/index.php?main_page=product_info&products_id=272) device 
+to my network.  It uses the GPS satellite's atomic clock to provide a highly accurate stratum-1 time 
+source to your network.
+
+I was noticing that the satellite lock was not stable.  I was going to need something more advanced 
+than just looking at the display - I needed to store and visualize the time-series data, and 
+that is what this project does.
+
+I have tested this on both amd64/arm64 hardware architectures.  I specifically run this on a raspberry pi 4 running 
+Ubuntu Server 64bit.
 
 ## Getting Started
 
-You need to have a python3 installed.
+You will need to have InfluxDB 2.x setup. This version comes with visualization support, but 
+Grafana has more advanced features.  I have a [docker-compose](https://github.com/sean-foley/influx) 
+file that will spin up an Influxdb and Grafana visualization tier to help out.
 
 ### Prerequisites
 
-What things you need to install the software and how to install them
-
-```
-Give examples
-```
+You will need to have docker and docker-compose installed on your host machine.  
 
 ### Installing
 
-A step by step series of examples that tell you how to get a development env running
-
-Say what the step will be
+First, clone the repo...
 
 ```
-Give the example
+git clone https://github.com/sean-foley/leo-ntp-monitor.git
 ```
 
-And repeat
+Then build the docker image.  There is a handy makefile target for this because 
+I always forget the docker syntax...
 
 ```
-until finished
+make build
 ```
 
-End with an example of getting some data out of the system or using it for a little demo
-
-## Running the tests
-
-Explain how to run the automated tests for this system
-
-### Break down into end to end tests
-
-Explain what these tests test and why
+Edit the docker-compose.yml file and set the NTP host name/ip address, Influxdb org name, 
+bucket name, and api token.  Once the configuration is set, you can start the container...
 
 ```
-Give an example
+docker-compose up
 ```
 
-### And coding style tests
+If everything looks good and you started the container as specified above, then you can press CTRL-C to stop it.
 
-Explain what these tests test and why
-
+Now start the container headless...
 ```
-Give an example
+docker-compose up -d
 ```
-
-## Deployment
-
-Add additional notes about how to deploy this on a live system
 
 ## Built With
 
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
+* [Docker](https://www.docker.com/) - Container support
+* [Docker-Compose](https://docs.docker.com/compose/install/) - Container orchestration
+* [GitHub](https://github.com/) - Source control
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
-
-## Versioning
-
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
-
-## Authors
-
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
-
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
+I will take pull requests, but the reality is this project is so small that you're probably better off 
+just forking it.
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
 
 ## Acknowledgments
-
-* Hat tip to anyone whose code was used
-* Inspiration
-* etc
+**Billie Thompson** - *for the README.md template* - [PurpleBooth](https://github.com/PurpleBooth)
